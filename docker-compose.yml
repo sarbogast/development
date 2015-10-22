@@ -1,0 +1,13 @@
+web:
+  build: ./web
+  ports:
+    - '3000:3000'
+  links:
+    - syncgateway
+syncgateway:
+  image: 'couchbase/sync-gateway:latest'
+  command: /www/development.json
+  volumes:
+    - ./sync-gateway-config/:/www/
+  ports:
+    - '4984:4984'
