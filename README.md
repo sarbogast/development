@@ -42,7 +42,7 @@ The great thing about using Docker in your development environment is that you d
 
 In the same Terminal window, create a new directory called **sync-gateway-docker** and inside that folder create a new **sync-gateway-config.json** file with following:
 
-```javascript
+```js
 {
      "log":["*"],
      "verbose": true,
@@ -116,7 +116,7 @@ Now, if you commit and push to GitHub, the development repository will reference
 
 Now that you have the source code for the Web App and Sync Gateway configuration file nicely organized you start using Docker Compose to orchestrate and manage different Docker containers. Open `docker-compose.yml` and let's have a look:
 
-```
+```yaml
 web:
   build: ./web
   ports:
@@ -239,11 +239,11 @@ And open your tutum node subdomain on port 3000:
 
 ## Continuously deploy your application
 
-We are a few extra steps from achieving continuous deployment. We now want to automatically redeploy our application service whenever there is a new image available on Docker Hub. The same way we triggered the Docker Hub build from CircleCI, we are going to trigger a Tutum Redeploy from Docker Hub when a new image is successfully published.
+We are a few extra steps from achieving continuous deployment. We now want to automatically redeploy our application service whenever there is a new image available on Docker Hub. The same way we triggered the Docker Hub build from GitHub, we are going to trigger a Tutum Redeploy from Docker Hub when a new image is successfully published.
 
 1. From the **Services** tab, click on your application service
 2. Go to the **Triggers** tab and add a redeploy trigger named Docker Hub
-3. Refresh the page (this is needed at the time of writing) and copy the trigger URL
+3. Refresh the page and copy the trigger URL
 4. Go back to your Docker Hub repository page, then click on **Settings > Webhooks**
 5. Add a webhook calling the trigger URL you just copied
 
