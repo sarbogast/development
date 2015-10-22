@@ -8,7 +8,7 @@ The Couchbase Mobile stack in it's simplest form consists of 3 components that a
 **Sync Gateway** is the middle-tier server that exposes a database API for Couchbase Lite databases to replicate to and from (data is not persisted in Sync Gateway).
 **Couchbase Server** is a NoSQL server that's used as a storage engine by Sync Gateway.
 
-**NOTE:** You could use Couchbase Lite as a embedded database only with the sync capabilities but for this tutorial we will consider the most common use cases.
+**NOTE:** You can use Couchbase Lite as an embedded database only without the sync capabilities.
 
 In this stack, each component has a clear responsibility and can greatly reduce the time it takes to build a suit of applications (Android, iOS, Web...) without compromising on the user experience because the user's data is automatically synched to Couchbase Lite in the background.
 
@@ -20,7 +20,7 @@ From a deployment standpoint (especially if you are not a DevOpsy person!) it ma
 - Setting up the Docker Hub repositories
 - Continuously Deploying with Tutum
 
-By the end of the tutorial, the release piple will look like this:
+By the end of the tutorial, the release pipeline will look like this:
 
 ![](assets/pipeline.png)
 
@@ -30,7 +30,7 @@ And your project directory will have the following structure:
 
 ## Getting Started with Docker
 
-If you are new to Docker, be sure to follow [this guide](https://docs.docker.com/mac/step_one/) to install the Docker Toolbox. It will install a number of other tools such as Docker Machine and Docker Compose that we will need later. Use the **Docker Quickstart Terminal** from the Launchpad on Mac OS X, this will start a new VM with Virtual Box, configure it as a Docker Host and set up the Docker client to connect to it in a new Terminal window:
+If you are new to Docker, be sure to follow [this guide](https://docs.docker.com/mac/step_one/) to install the Docker Toolbox. It will install a number of other tools such as Docker Machine and Docker Compose that we will need later. Use the **Docker Quickstart Terminal** from the Launchpad on Mac OS X, this will start a new VM with Virtual Box, configure it as a Docker Host and open a new Terminal window:
 
 ![](assets/launchpad.png)
 
@@ -116,7 +116,7 @@ Now, if you commit and push to GitHub, the development repository will reference
 
 Now that you have the source code for the Web App and Sync Gateway configuration file nicely organized you start using Docker Compose to orchestrate and manage different Docker containers. Open `docker-compose.yml` and let's have a look:
 
-```bash
+```
 web:
   build: ./web
   ports:
@@ -200,7 +200,7 @@ At this point, you should have your server(s) ready for production and reachable
 Time to use a production-ready version of the application: the Docker image built by Docker Hub. Remember I told you the `docker-compose.yml` will come handy? To deploy our application, we’re gonna use Tutum Stacks, which are YAML files very similar to Docker Compose files.
 Here's the `tutum-staging.yml` we’re going to use:
 
-```
+```yaml
 web:
   image: kitchensync/web
   ports:
