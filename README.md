@@ -12,7 +12,7 @@ The Couchbase Mobile stack in it's simplest form consists of 3 components that a
 
 In this stack, each component has a clear responsibility and can greatly reduce the time it takes to build a suit of applications (Android, iOS, Web...) without compromising on the user experience because the user's data is automatically synched to Couchbase Lite in the background.
 
-From a deployment standpoint (especially if you are not a DevOpsy person!) it may look like a nightmare but thanks to the Docker Toolbox and Tutum (now part of Docker!), you can continuously deploy each component individually with a simple **git push**. Here are the core concepts that you will learn in this tutorial:
+From a deployment standpoint it may look like a nightmare (especially if you are not a DevOpsy person!) but thanks to the Docker Toolbox and Tutum (now part of Docker!), you can continuously deploy each component individually with a simple **git push**. Here are the core concepts that you will learn in this tutorial:
 
 - Basic Docker commands for Sync Gateway
 - The development environment with Docker Compose and code sharing on GitHub
