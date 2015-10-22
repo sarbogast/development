@@ -1,0 +1,6 @@
+[submodule "web"]
+	path = web
+	url = git@github.com:Kitchen-Sync/web.git
+[submodule "sync-gateway-config"]
+	path = sync-gateway-config
+	url = git@github.com:Kitchen-Sync/sync-gateway-config.git
