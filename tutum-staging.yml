@@ -7,8 +7,8 @@ web:
   tags:
     - kitchen-sync-staging
 syncgateway:
-  image: 'couchbase/sync-gateway:latest'
-  command: 'http://git.io/vWnCH'
+  image: kitchensync/sync-gateway
+  command: /development.json
   ports:
     - '4984:4984'
   tags:

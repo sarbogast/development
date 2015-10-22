@@ -124,10 +124,8 @@ web:
   links:
     - syncgateway
 syncgateway:
-  image: 'couchbase/sync-gateway:latest'
-  command: /www/dev.json
-  volumes:
-    - ./sync-gateway-config/:/www/
+  build: ./sync-gateway-config
+  command: /development.json
   ports:
     - '4984:4984'
 ```
@@ -180,6 +178,10 @@ And see the action in the **Build Details** tab of the Docker Hub repository:
 
 ![](assets/build-details.png)
 
+### Sync Gateway Repository
+
+The same process applies to the your own Sync Gateway container. Create a new automated build repository on Docker Hub called **kitchensync/sync-gateway-config** that's linked to the **kitchen-sync/sync-gateway-conig** GitHub repository.
+
 ## Tutum
 
 For this section, you're going to use Tutum.
@@ -210,8 +212,8 @@ web:
   tags:
     - kitchen-sync-staging
 syncgateway:
-  image: 'couchbase/sync-gateway:latest'
-  command: 'http://git.io/vWnCH'
+  image: 'kitchensync/sync-gateway:latest'
+  command: /development.json
   ports:
     - '4984:4984'
   tags:
@@ -239,11 +241,17 @@ And open your tutum node subdomain on port 3000:
 
 ## Continuous Deployment
 
+Before we get into the specifics let's review the different services to continuously deploy:
+
+![](assets/couchbase-mobile-stack.png)
+
+As you can see, the Web App source code is always built as a new Docker image on Docker Hub before being deployed with Tutum. For Sync Gateway, however, the service on Tutum is simply redeployed with the updated config file pulled from GitHub.
+
 ### Continuously Deploy your Web App
 
 The same way we triggered the Docker Hub build from GitHub, we are going to trigger a Tutum Redeploy from Docker Hub when a new image is successfully published.
 
-1. From the **Services** tab, click on the service named **Web**
+1. From the **Services** tab, click on the service named **web**
 2. Go to the **Triggers** tab and add a redeploy trigger named Docker Hub
 3. Refresh the page and copy the trigger URL
 4. Go back to your Docker Hub repository page, then click on **Settings > Webhooks**
@@ -253,4 +261,73 @@ Now, push some edits to your repository and follow your application as it goes t
 
 Development→ GitHub → CircleCI → Docker Hub → Tutum → Production
 
+I've updated the background color to grey, pushed it to GitHub and the change is live on the staging Tutum node soon after:
+
+![](assets/web-app-grey.png)
+
 ### Continuously Deploy Sync Gateway
+
+Again, the same concept applies to deploy the **syncgateway** service. Create a Redeploy Trigger in Tutum and copy the URL to a new WebHook in Docker Hub for the repository **kitchensync/sync-gateway-config**. To check that it's working I'm going to push an update to `development.json` with the following:
+
+```js
+	...
+	"users": {"james": {"password": "letmein", "all_channels": ["*"], "admin_channels": ["*"]}},
+	...
+```
+
+Here, we've replace the GUEST user with a real user. As a result, the browser should prompt us to log in with a user's name and password. Run the commands `git commit -am "update dev config"` and `git push`. Then head over to the Tutum node at **http://{your-node-hostname}:4984/kitchen-sync** and surely enough, we are prompted to login!
+
+![](assets/login-popup.png)
+
+## Adding a Production node
+
+Having Continuous Deployment is especially convenient for the staging environment to test and share feature updates with other team members. When it comes to production, you can decide to use Continuous Deployment or do it manually. To wrap up this tutorial, we'll cover the manual apprach. Head back to the Tutum website and create a new Node with a **Tag** called **kitchen-sync-production**. Then, create a new Stack with following (from `tutum-production.yml`):
+
+```yaml
+web:
+  image: kitchensync/web
+  ports:
+    - '3000:3000'
+  links:
+    - syncgateway
+  tags:
+    - kitchen-sync-production
+syncgateway:
+  image: kitchensync/sync-gateway
+  command: /production.json
+  ports:
+    - '4984:4984'
+  tags:
+    - kitchen-sync-production
+couchbaseserver:
+  image: 'couchbase/server'
+  ports:
+    - '8091:8091'
+  tags:
+    - kitchen-sync-production
+```
+
+There 3 differences with Tutum file you used previously:
+
+- The specified tag is now **kitchen-sync-production**
+- The syncgateway command option is now point to the production configuration file
+- You're adding a new service called couchbaseserver to persist the data!
+
+Click **Create Stack** and wait for the services to come up. The **syncgateway** service should fail because you need to create a user and bucket in Couchbase Server first:
+
+![](assets/sg-down.png)
+
+In Tutum, select the **couchbaseserver** service and click on the running image then on the **Terminal** tab which will open a new session in this container. Run the following commands:
+
+```
+# /opt/couchbase/bin/couchbase-cli cluster-init -c 127.0.0.1 --cluster-init-username=Administrator --cluster-init-password=password --cluster-init-ramsize=600 -u admin -p password
+# /opt/couchbase/bin/couchbase-cli bucket-create -c 127.0.0.1:8091 --bucket=default --bucket-type=couchbase --bucket-port=11211 --bucket-ramsize=600 --bucket-replica=1 -u Administrator -p password
+```
+
+Then, try restarting the **syncgateway** service and this time it should work.
+
+## Where To Go From Here
+
+![](assets/tutum-services.png)
+
+// conclusion

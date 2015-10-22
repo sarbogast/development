@@ -5,9 +5,7 @@ web:
   links:
     - syncgateway
 syncgateway:
-  image: 'couchbase/sync-gateway:latest'
-  command: /www/development.json
-  volumes:
-    - ./sync-gateway-config/:/www/
+  build: ./sync-gateway-config
+  command: /development.json
   ports:
     - '4984:4984'

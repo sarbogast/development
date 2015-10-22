@@ -5,11 +5,17 @@ web:
   links:
     - syncgateway
   tags:
-    - kitchen-sync-staging
+    - kitchen-sync-production
 syncgateway:
-  image: 'couchbase/sync-gateway:latest'
-  command: 'http://git.io/vWnEj'
+  image: kitchensync/sync-gateway
+  command: /production.json
   ports:
     - '4984:4984'
   tags:
-    - kitchen-sync-staging
+    - kitchen-sync-production
+couchbaseserver:
+  image: couchbase/server
+  ports:
+    - '8091:8091'
+  tags:
+    - kitchen-sync-production
