@@ -235,13 +235,15 @@ And open your tutum node subdomain on port 3000:
 
 ![](assets/web-app-staging.png)
 
-**Congratulations!** You just deployed your application.
+**Congratulations!** You just deployed your application. We now want to automatically redeploy our application services whenever there is a new commit pushed to GitHub.
 
-## Continuously deploy your application
+## Continuous Deployment
 
-We are a few extra steps from achieving continuous deployment. We now want to automatically redeploy our application service whenever there is a new image available on Docker Hub. The same way we triggered the Docker Hub build from GitHub, we are going to trigger a Tutum Redeploy from Docker Hub when a new image is successfully published.
+### Continuously Deploy your Web App
 
-1. From the **Services** tab, click on your application service
+The same way we triggered the Docker Hub build from GitHub, we are going to trigger a Tutum Redeploy from Docker Hub when a new image is successfully published.
+
+1. From the **Services** tab, click on the service named **Web**
 2. Go to the **Triggers** tab and add a redeploy trigger named Docker Hub
 3. Refresh the page and copy the trigger URL
 4. Go back to your Docker Hub repository page, then click on **Settings > Webhooks**
@@ -250,3 +252,5 @@ We are a few extra steps from achieving continuous deployment. We now want to au
 Now, push some edits to your repository and follow your application as it goes through your deployment pipeline:
 
 Development→ GitHub → CircleCI → Docker Hub → Tutum → Production
+
+### Continuously Deploy Sync Gateway
