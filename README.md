@@ -36,7 +36,7 @@ If you try to run `docker ps` (the command to list all containers) nothing happe
 
 The great thing about using Docker in your development environment is that you don't need to install your application dependencies on your host machine. They can reside in a Docker container running the application. Declaring the dependencies to be used in a Docker container is done in the Dockerfile and luckily for us there are official repositories on Docker Hub for [Sync Gateway](https://hub.docker.com/r/couchbase/sync-gateway/) and [Couchbase Server](https://hub.docker.com/r/couchbase/server).
 
-In the same Terminal window, create a new directory called **sync-gateway-docker** and inside that folder create a new **sync-gateway-config.json** file with the following:
+Create a new directory called **sync-gateway-docker** and inside that folder add a new **sync-gateway-config.json** file with the following:
 
 ```js
 {
@@ -55,7 +55,7 @@ In the same Terminal window, create a new directory called **sync-gateway-docker
 }
 ```
 
-You're creating a database called **kitchen-sync** and using the **Walrus** mode which means that all the documents are stored in memory. This is especially convenient in development when you are testing the functionalities of your app and don't need a Couchbase Server running to persist data. In the directory where you created the config file, start Sync Gateway in a Docker container:
+You're creating a database called **kitchen-sync** and using the **walrus** mode which means that all the documents are stored in memory. This is especially convenient in development when you are testing the functionalities of your app and don't need a Couchbase Server running to persist data. In the directory where you created the config file, start Sync Gateway in a Docker container:
 
 ```bash
 $ docker run -v '~/sync-gateway-docker/:/' -p 4984:4984 couchbase/sync-gateway /sync-gateway-config.json
@@ -63,10 +63,10 @@ $ docker run -v '~/sync-gateway-docker/:/' -p 4984:4984 couchbase/sync-gateway /
 
 Here's what is happening:
 
-- **v**: The v flag stands for volume. You're mounting the current directory of the host which contains the config file in the root directory of the container.
-- **p**: You're mapping port 4984 of the container to the same value in the docker host (your machine).
-- **couchbase/sync-gateway**: The name of the image hosted on Docker Hub to run (see official [couchbase/sync-gateway](https://hub.docker.com/r/couchbase/sync-gateway/) page).
-- **/www/sync-gateway-config.json**: The path to the config file you mounted in the container.
+- **v**: The v flag stands for volume. You're mounting the current directory of the host which contains the config file in the root directory of the container
+- **p**: You're mapping port 4984 of the container to the same value in the docker host (your machine)
+- **couchbase/sync-gateway**: The name of the image hosted on Docker Hub to run (see official [couchbase/sync-gateway](https://hub.docker.com/r/couchbase/sync-gateway/) page)
+- **/sync-gateway-config.json**: The path to the config file you mounted in the container
 
 Now open a new browser window at **http://192.168.99.100:4984** (replace the IP address if yours is different). You should see the Sync Gateway welcome message:
 
@@ -78,9 +78,9 @@ Hooray! You've got your first Sync Gateway container running. In the next sectio
 
 To keep it simple, I have already published the code of the different components under the **Kitchen-Sync** GitHub organisation. There are 3 repositories:
 
-- [sync-gateway](https://github.com/Kitchen-Sync/sync-gateway) contains the configuration file to pass to Sync Gateway instances.
-- [web](https://github.com/Kitchen-Sync/web) is a simple Web App built with ReactJS on the front-end and a Node.js web server that connects to the Sync Gateway REST API.
-- [development](https://github.com/Kitchen-Sync/development) ties all of the components together in the same directory as submodules. There is also a `README.md` and `docker-compose.yml` file that will help us start all the different components very easily.
+- [sync-gateway](https://github.com/Kitchen-Sync/sync-gateway-config) contains the configuration file to pass to Sync Gateway instances
+- [web](https://github.com/Kitchen-Sync/web) is a simple Web App built with ReactJS on the front-end and a Node.js web server that connects to the Sync Gateway REST API
+- [development](https://github.com/Kitchen-Sync/development) ties all of the components together in the same directory as submodules. There is also a `README.md` and `docker-compose.yml` file that will help us start all the different components very easily
 
 In a new directory, run the following commands:
 
@@ -107,7 +107,7 @@ $ git submodule add git@github.com:<project>/sync-gateway-config.git
 $ git submodule add git@github.com:<project>/web.git
 ```
 
-Now, if you commit and push to GitHub, the development repository will reference the submodules as well:
+If you commit and push to GitHub, the development repository will reference the submodules as well:
 
 ![](assets/submodules.png)
 
@@ -129,7 +129,7 @@ syncgateway:
     - '4984:4984'
 ```
 
-The first container image is called **web** and is built directly out of the **web** directory. That's because there is a **Dockerfile** inside of that directory to that describes the steps to build the image. We won't cover [Dockerizing applications](https://docs.docker.com/userguide/dockerizing/) in this tutorial but it's crucial that you understand how it works because unless you use an image that is already published to Docker Hub, you will need to Dockerize your application components to get Continuous Delivery set up correctly. The second container is called **syncgateway** and is using also building the container image from the **sync-gateway-config** directory. If you open **sync-gateway-config/Dockerfile** you will that it's based on the official [couchbase/sync-gateway](https://hub.docker.com/r/couchbase/sync-gateway/) image and mounts the direct config files in the container. The options specified are the same as the one you specified in the `docker run` in the first section of this tutorial.
+The first container image is called **web** and is built directly out of the **web** directory. That's because there is a **Dockerfile** inside of that directory that describes the steps to build the image. We won't cover [Dockerizing applications](https://docs.docker.com/userguide/dockerizing/) in this tutorial but it's crucial that you understand how it works because unless you use an image that is already published to Docker Hub, you will need to Dockerize your application components to get Continuous Delivery set up correctly. The second container is called **syncgateway** and is also building the container image from the **sync-gateway-config** directory. If you open **sync-gateway-config/Dockerfile** you will see that it's based on the official [couchbase/sync-gateway](https://hub.docker.com/r/couchbase/sync-gateway/) image and mounts the different config files in the container. The options specified are the same as the ones you used in the `docker run` command in the first section of this tutorial.
 
 Run this command to start both containers:
 
@@ -137,11 +137,11 @@ Run this command to start both containers:
 $ docker-compose up
 ```
 
-Notice how the logs from Sync Gateway (in blue) and from the Web App (in yellow) are aggregated. This is a huge win for productivity during development as you don't have to switch between different Terminal tabs.
+Notice how the logs from Sync Gateway (in blue) and from the Web App (in yellow) are aggregated. This is a huge win for productivity during development as you don't have to switch between different Terminal tabs:
 
 ![](assets/logs.png)
 
-Next, open **http://192.168.99.100:3000** (replace the IP address if yours is different) and start adding items. Items are persisted to Sync Gateway, reloading the page will fetch the documents from Sync Gateway:
+Next, open **http://192.168.99.100:3000** (replace the IP address if yours is different) and start adding items. Items are persisted to Sync Gateway, reloading the page will fetch the documents:
 
 ![](assets/development-web-persist.png)
 
@@ -179,7 +179,7 @@ And see the action in the **Build Details** tab of the Docker Hub repository:
 
 ### Sync Gateway Repository
 
-The same process applies to the Sync Gateway container. Create a new automated build repository on Docker Hub called **kitchensync/sync-gateway** that's linked to the **kitchen-sync/sync-gateway-conig** GitHub repository.
+The same process applies to the Sync Gateway container. Create a new automated build repository on Docker Hub called **kitchensync/sync-gateway** that's linked to the **kitchen-sync/sync-gateway-config** GitHub repository.
 
 ## Tutum
 
@@ -248,7 +248,7 @@ As you can see, the Web App source code is always built as a new Docker image on
 
 ### Continuously Deploy your Web App
 
-The same way we triggered the Docker Hub build from GitHub, we are going to trigger a Tutum Redeploy from Docker Hub when a new image is successfully published.
+The same way we triggered the Docker Hub build from GitHub, we are going to trigger a Tutum Redeploy from Docker Hub when a new image is successfully published:
 
 1. From the **Services** tab, click on the service named **web**
 2. Go to the **Triggers** tab and add a redeploy trigger named Docker Hub
@@ -256,13 +256,13 @@ The same way we triggered the Docker Hub build from GitHub, we are going to trig
 4. Go back to your Docker Hub repository page, then click on **Settings > Webhooks**
 5. Add a webhook calling the trigger URL you just copied
 
-Now, push some edits to your repository and follow your application as it goes through your deployment pipeline:
+Push some edits to your repository and follow your application as it goes through your deployment pipeline:
 
-Development→ GitHub → CircleCI → Docker Hub → Tutum → Production
+Development→ GitHub → Docker Hub → Tutum → Production
 
-I've updated the background color to grey, pushed it to GitHub and the change is reflected on the staging Tutum node soon after:
+I've updated the background color to blue, pushed it to GitHub and the change is reflected on the [staging Tutum node](http://d929c39c-jamiltz.node.tutum.io:3000) soon after:
 
-![](assets/web-app-grey.png)
+![](assets/web-app-blue.png)
 
 ### Continuously Deploy Sync Gateway
 
