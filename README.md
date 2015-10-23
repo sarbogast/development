@@ -1,11 +1,11 @@
-# Continuous Deployment of Couchbase Mobile applications with Docker Compose, Docker Hub and Tutum
+# Continuous Deployment for the Couchbase Mobile stack with Compose, Docker Hub and Tutum
 
 The Couchbase Mobile stack in it's simplest form consists of 3 components that are shown in the diagram below:
 
 ![](assets/couchbase-mobile-stack.png)
 
 **Couchbase Lite** is a NoSQL mobile database that persists data in JSON and binary format.
-**Sync Gateway** is the middle-tier server that exposes a database API for Couchbase Lite databases to replicate to and from (data is not persisted in Sync Gateway).
+**Sync Gateway** is the middleman server that exposes a database API for Couchbase Lite databases to replicate to and from (data is not persisted in Sync Gateway).
 **Couchbase Server** is a NoSQL server that's used as a storage engine by Sync Gateway.
 
 **NOTE:** You can use Couchbase Lite as an embedded database only without the sync capabilities.
@@ -20,51 +20,50 @@ From a deployment standpoint it may look like a nightmare (especially if you are
 - Setting up the Docker Hub repositories
 - Continuously Deploying with Tutum
 
-By the end of the tutorial, the release pipeline will look like this:
+The release pipeline will look like this:
 
 ![](assets/pipeline.png)
 
-And your project directory will have the following structure:
-
-// img
-
 ## Getting Started with Docker
 
-If you are new to Docker, be sure to follow [this guide](https://docs.docker.com/mac/step_one/) to install the Docker Toolbox. It will install a number of other tools such as Docker Machine and Docker Compose that we will need later. Use the **Docker Quickstart Terminal** from the Launchpad on Mac OS X, this will start a new VM with Virtual Box, configure it as a Docker Host and open a new Terminal window:
+If you are new to Docker, be sure to follow [this guide](https://docs.docker.com/mac/step_one/) to install the Docker Toolbox. It will install a number of other tools such as Docker Machine and Docker Compose that we will need later. Use the **Docker Quickstart Terminal** application from the Launchpad on Mac OS X, this will start a new VM with Virtual Box, configure it as a Docker Host and open a new Terminal window:
 
 ![](assets/launchpad.png)
 
-Check the Terminal window for the IP address of the Docker host as you will need it later. Run `docker -v` and `docker-compose` to make sure the binaries were installed correctly.
+Make a note of the IP address of the Docker host that got automatically printed to the Terminal window as you will need it later. Run `docker -v` and `docker-compose` to make sure the binaries were installed correctly.
 
 If you try to run `docker ps` (the command to list all containers) nothing happens and that's because you need to tell Docker to connect to the Docker machine you created above. Docker uses environment variables for this, run `eval "$(docker-machine env default)"` and then run `docker ps` again which should work this time. 
 
 The great thing about using Docker in your development environment is that you don't need to install your application dependencies on your host machine. They can reside in a Docker container running the application. Declaring the dependencies to be used in a Docker container is done in the Dockerfile and luckily for us there are official repositories on Docker Hub for [Sync Gateway](https://hub.docker.com/r/couchbase/sync-gateway/) and [Couchbase Server](https://hub.docker.com/r/couchbase/server).
 
-In the same Terminal window, create a new directory called **sync-gateway-docker** and inside that folder create a new **sync-gateway-config.json** file with following:
+In the same Terminal window, create a new directory called **sync-gateway-docker** and inside that folder create a new **sync-gateway-config.json** file with the following:
 
 ```js
 {
-     "log":["*"],
-     "verbose": true,
-     "databases": {
-          "kitchen-sync": {
-             "server":"walrus:",
-             "users": {"GUEST": {"disabled": false, "all_channels": ["*"], "admin_channels": ["*"]}},
-             "sync":`function(doc) {channel(doc.channels);}`
-          }
-     }
+  "log":["*"],
+  "verbose": true,
+  "databases": {
+    "kitchen-sync": {
+      "server":"walrus:.",
+      "users": {"GUEST": {"disabled": false, "all_channels": ["*"], "admin_channels": ["*"]}},
+      "sync":`
+        function(doc) {
+          channel(doc.channels);
+        }`
+    }
+  }
 }
 ```
 
 You're creating a database called **kitchen-sync** and using the **Walrus** mode which means that all the documents are stored in memory. This is especially convenient in development when you are testing the functionalities of your app and don't need a Couchbase Server running to persist data. In the directory where you created the config file, start Sync Gateway in a Docker container:
 
 ```bash
-$ docker run -v '/Users/jamesnocentini/Developer/mini-hacks/continuous-deployment/:/www/' -p 4984:4984 couchbase/sync-gateway /www/sync-gateway-config.json
+$ docker run -v '~/sync-gateway-docker/:/' -p 4984:4984 couchbase/sync-gateway /sync-gateway-config.json
 ```
 
 Here's what is happening:
 
-- **v**: The v flag stands for volume. You're mounting the current directory of the host which contains the config file in a new **www** directory in the container.
+- **v**: The v flag stands for volume. You're mounting the current directory of the host which contains the config file in the root directory of the container.
 - **p**: You're mapping port 4984 of the container to the same value in the docker host (your machine).
 - **couchbase/sync-gateway**: The name of the image hosted on Docker Hub to run (see official [couchbase/sync-gateway](https://hub.docker.com/r/couchbase/sync-gateway/) page).
 - **/www/sync-gateway-config.json**: The path to the config file you mounted in the container.
@@ -73,15 +72,15 @@ Now open a new browser window at **http://192.168.99.100:4984** (replace the IP 
 
 ![](assets/browser-user-port.png)
 
-Hooray! You've got your first Sync Gateway container running. In the next section, we'll introduce a few more components (Couchbase Server and a Web App) that will each run in different containers. But first, you need to grab some source code so fire up your Git commands.
+Hooray! You've got your first Sync Gateway container running. In the next section, we'll introduce a few more components (Couchbase Server and a Web App) that will each run in different containers. But first, you need to grab some source code so fire up your Git!
 
 ## Code sharing on GitHub
 
-To keep it simple, we have already published the code of the different components under the **Kitchen-Sync** GitHub organisation. There are 3 repositories:
+To keep it simple, I have already published the code of the different components under the **Kitchen-Sync** GitHub organisation. There are 3 repositories:
 
-- [sync-gateway]() contains the configuration file to pass to Sync Gateway instances.
-- [web]() is a simple Web App built with ReactJS on the front-end and a Node.js web server that connects to the Sync Gateway REST API.
-- [development]() ties all of the components together in the same directory as submodules. There is also a `README.md` and `docker-compose.yml` file that will help us start all the different components very easily.
+- [sync-gateway](https://github.com/Kitchen-Sync/sync-gateway) contains the configuration file to pass to Sync Gateway instances.
+- [web](https://github.com/Kitchen-Sync/web) is a simple Web App built with ReactJS on the front-end and a Node.js web server that connects to the Sync Gateway REST API.
+- [development](https://github.com/Kitchen-Sync/development) ties all of the components together in the same directory as submodules. There is also a `README.md` and `docker-compose.yml` file that will help us start all the different components very easily.
 
 In a new directory, run the following commands:
 
@@ -94,7 +93,7 @@ $ git submodule update
 
 ### How-To
 
-To do the same for your project, head over to the [New Organization](https://github.com/organizations/new) page and create the different repositories as needed in your application. Don't forget to create the entrypoint repository to other applications that will be added as submodules.
+To do the same for your project, head over to the [New Organization](https://github.com/organizations/new) page and create the different repositories as needed in your application. Don't forget to create the entrypoint repository (called **development**) that will reference the other application components as submodules.
 
 ```bash
 $ git clone git@github.com:<project>/development.git <project>
@@ -114,7 +113,7 @@ Now, if you commit and push to GitHub, the development repository will reference
 
 ## Docker Compose for development
 
-Now that you have the source code for the Web App and Sync Gateway configuration file nicely organized you start using Docker Compose to orchestrate and manage different Docker containers. Open `docker-compose.yml` and let's have a look:
+Now that you have the source code for the Web App and the Sync Gateway configuration file nicely organized you can start using Docker Compose to orchestrate and manage different Docker containers. Open `docker-compose.yml` and let's have a look:
 
 ```yaml
 web:
@@ -130,7 +129,7 @@ syncgateway:
     - '4984:4984'
 ```
 
-The first container image is called **web** and is built directly out of the **web** directory. That's because there is a **Dockerfile** inside of that directory to that describes the steps to build the image. We won't cover [Dockerizing applications]() in this tutorial but it's crucial that you understand how because unless you use an image that is already published to Docker Hub, you will need to Dockerize your application components to get Continuous Delivery set up correctly. The second container is called **syncgateway** and is using the official [couchbase/sync-gateway]() image with the development config file. The options specified are the same as the one you specified in the `docker run` in the first section of this tutorial.
+The first container image is called **web** and is built directly out of the **web** directory. That's because there is a **Dockerfile** inside of that directory to that describes the steps to build the image. We won't cover [Dockerizing applications](https://docs.docker.com/userguide/dockerizing/) in this tutorial but it's crucial that you understand how it works because unless you use an image that is already published to Docker Hub, you will need to Dockerize your application components to get Continuous Delivery set up correctly. The second container is called **syncgateway** and is using also building the container image from the **sync-gateway-config** directory. If you open **sync-gateway-config/Dockerfile** you will that it's based on the official [couchbase/sync-gateway](https://hub.docker.com/r/couchbase/sync-gateway/) image and mounts the direct config files in the container. The options specified are the same as the one you specified in the `docker run` in the first section of this tutorial.
 
 Run this command to start both containers:
 
@@ -138,7 +137,7 @@ Run this command to start both containers:
 $ docker-compose up
 ```
 
-Notice how the logs from Sync Gateway (in blue) and from the Web App (in yellow) are aggregated. This is huge win for productivity during development as you don't have to switch between different Terminal tabs.
+Notice how the logs from Sync Gateway (in blue) and from the Web App (in yellow) are aggregated. This is a huge win for productivity during development as you don't have to switch between different Terminal tabs.
 
 ![](assets/logs.png)
 
@@ -150,11 +149,11 @@ Well done! You've decoupled the Sync Gateway configuration file from the Web App
 
 ## Docker Hub
 
-**NOTE:** To reproduce the steps below with your own Docker Hub and Tutum accounts you will need to be a member of the [Kitchen-Sync](https://github.com/Kitchen-Sync). Ping me your GitHub username on [Twitter](http://twitter.com/jamiltz) or try the following with your own applications components.
+**NOTE:** To reproduce the steps below with your own Docker Hub and Tutum accounts you will need to be a member of the [Kitchen-Sync](https://github.com/Kitchen-Sync) organization. Ping me your GitHub username on [Twitter](http://twitter.com/jamiltz) or try the following with your own application components.
 
 Remember how `docker-compose.yml` builds the image for the container named **web** from the local directory? Well, that's perfect during development because you can change the source and simply run `docker-compose up` again. For production deployments however, we need to have a shared image that can be pulled by services such as Tutum. Docker Hub is the perfect tool to host container images online so head over to [hub.docker.com](http://hub.docker.com) and do the following:
 
-1. Click the **Organizations** tab and create a new organization name **KitchenSync** (you may have to append characters to ensure uniquness of the name as it will already exist on Docker Hub)
+1. Click the **Organizations** tab and create a new organization named **KitchenSync** (you may have to append characters to ensure uniquness of the name as it will already exist on Docker Hub)
 
 Create a new repository with the following steps:
 
@@ -180,7 +179,7 @@ And see the action in the **Build Details** tab of the Docker Hub repository:
 
 ### Sync Gateway Repository
 
-The same process applies to the your own Sync Gateway container. Create a new automated build repository on Docker Hub called **kitchensync/sync-gateway-config** that's linked to the **kitchen-sync/sync-gateway-conig** GitHub repository.
+The same process applies to the Sync Gateway container. Create a new automated build repository on Docker Hub called **kitchensync/sync-gateway** that's linked to the **kitchen-sync/sync-gateway-conig** GitHub repository.
 
 ## Tutum
 
@@ -189,13 +188,13 @@ For this section, you're going to use Tutum.
 ### Creating a node cluster ready for Docker deployment
 
 1. Create an account on Tutum and sign in
-2. Got to **Account info** > **Cloud providers** and connect the providers of your choice.
+2. Go to **Account info** > **Cloud providers** and connect the providers of your choice
 3. Under the **Nodes** tab, click **Launch new node cluster**
-4. Select a cluster name (e.g. kitchen-sync-staging), server type and cluster size (one should be enough for this example) then click **Launch node cluster**
+4. Select a cluster name (e.g. KitchenSyncStaging), a deploy tag (e.g. kitchen-sync-staging) server type and cluster size (one should be enough for this example) then click **Launch node cluster**
 
 ![](assets/staging-node.png)
 
-At this point, you should have your server(s) ready for production and reachable on a node.tutum.io sub-domain (in my case it was .
+At this point, you should have your server(s) ready for production and reachable on a node.tutum.io sub-domain (in my case it's [d929c39c-jamiltz.node.tutum.io](http://d929c39c-jamiltz.node.tutum.io)).
 
 ## Deploying the application stack
 
@@ -212,7 +211,7 @@ web:
   tags:
     - kitchen-sync-staging
 syncgateway:
-  image: 'kitchensync/sync-gateway:latest'
+  image: kitchensync/sync-gateway
   command: /development.json
   ports:
     - '4984:4984'
@@ -220,13 +219,13 @@ syncgateway:
     - kitchen-sync-staging
 ```
 
-Here, you're specifying a URL pointing to the Sync Gateway configuration file. It's in fact the raw URL of the `development.json` configuration file that was shortened with [http://git.io](git.io).
+Here, you're specifying the path to `development.json` which was mounted in the root directory of the container as per the Dockerfile published on the [Kitchen-Sync/sync-gateway-config](https://github.com/Kitchen-Sync/sync-gateway-config/) GitHub repository.
 
-Now we have out `tutum-staging.yml` and Web App image on Docker Hub, let's deploy:
+Now we have our `tutum-staging.yml` and both the Web App and Sync Gateway images on Docker Hub, let's deploy:
 
 1. Under the **Stacks** tab, click on **Create your first stack**
-2. Set a name for your stack (e.g kitchen-sync-staging)
-3. Paste the content of your **tutumstaging.yml** in the Stack file textarea
+2. Set a name for your stack (e.g. kitchen-sync-staging)
+3. Paste the content of your **tutum-staging.yml** in the Stack file textarea
 4. Click on **Create and deploy**
 
 Wait for both services to be up:
@@ -243,9 +242,9 @@ And open your tutum node subdomain on port 3000:
 
 Before we get into the specifics let's review the different services to continuously deploy:
 
-![](assets/couchbase-mobile-stack.png)
+![](assets/marble-diagram.png)
 
-As you can see, the Web App source code is always built as a new Docker image on Docker Hub before being deployed with Tutum. For Sync Gateway, however, the service on Tutum is simply redeployed with the updated config file pulled from GitHub.
+As you can see, the Web App source code is always built as a new Docker image on Docker Hub before being deployed with Tutum. Similarly for Sync Gateway, a new Sync Gateway image is published on Docker Hub when a change is made to one of the config files (`development.json` or `production.json`).
 
 ### Continuously Deploy your Web App
 
@@ -261,13 +260,13 @@ Now, push some edits to your repository and follow your application as it goes t
 
 Development→ GitHub → CircleCI → Docker Hub → Tutum → Production
 
-I've updated the background color to grey, pushed it to GitHub and the change is live on the staging Tutum node soon after:
+I've updated the background color to grey, pushed it to GitHub and the change is reflected on the staging Tutum node soon after:
 
 ![](assets/web-app-grey.png)
 
 ### Continuously Deploy Sync Gateway
 
-Again, the same concept applies to deploy the **syncgateway** service. Create a Redeploy Trigger in Tutum and copy the URL to a new WebHook in Docker Hub for the repository **kitchensync/sync-gateway-config**. To check that it's working I'm going to push an update to `development.json` with the following:
+Again, the same concept applies to deploy the **syncgateway** service. Create a Redeploy Trigger in Tutum and copy the URL to a new WebHook in Docker Hub for the repository **kitchensync/sync-gateway**. To check that it's working I'm going to push an update to `development.json` with the following:
 
 ```js
 	...
@@ -281,7 +280,7 @@ Here, we've replace the GUEST user with a real user. As a result, the browser sh
 
 ## Adding a Production node
 
-Having Continuous Deployment is especially convenient for the staging environment to test and share feature updates with other team members. When it comes to production, you can decide to use Continuous Deployment or do it manually. To wrap up this tutorial, we'll cover the manual apprach. Head back to the Tutum website and create a new Node with a **Tag** called **kitchen-sync-production**. Then, create a new Stack with following (from `tutum-production.yml`):
+Having Continuous Deployment is especially convenient for the staging environment to test and share feature updates with other team members. When it comes to production, you can decide to use Continuous Deployment or do it manually. To wrap up this tutorial, we'll cover the manual approach. Head back to the Tutum website and create a new Node with a **Tag** called **kitchen-sync-production**. Then, create a new Stack with the following (from `tutum-production.yml`):
 
 ```yaml
 web:
@@ -307,10 +306,10 @@ couchbaseserver:
     - kitchen-sync-production
 ```
 
-There 3 differences with Tutum file you used previously:
+There are 3 differences with the Tutum file you used previously for the staging server:
 
 - The specified tag is now **kitchen-sync-production**
-- The syncgateway command option is now point to the production configuration file
+- The syncgateway command option now points to the production configuration file
 - You're adding a new service called couchbaseserver to persist the data!
 
 Click **Create Stack** and wait for the services to come up. The **syncgateway** service should fail because you need to create a user and bucket in Couchbase Server first:
@@ -328,6 +327,8 @@ Then, try restarting the **syncgateway** service and this time it should work.
 
 ## Where To Go From Here
 
+On the services tab you should see all the different application components running:
+
 ![](assets/tutum-services.png)
 
-// conclusion
+Well done! You've successfully deployed a staging and production environment for the Couchbase Mobile stack. In addition, you now have continuous deployment running on the staging server which will make everyone happier in your team and increase productivity 10x!
