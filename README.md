@@ -147,7 +147,7 @@ Next, open **http://192.168.99.100:3000** (replace the IP address if yours is di
 
 Well done! You've decoupled the Sync Gateway configuration file from the Web App in the source code but the development experience remains streamlined and simple with Docker Compose.
 
-## Docker Hub 
+## Docker Hub
 
 **NOTE:** To reproduce the steps below with your own Docker Hub and Tutum accounts you will need to be a member of the [Kitchen-Sync](https://github.com/Kitchen-Sync) organization. Ping me your GitHub username on [Twitter](http://twitter.com/jamiltz) or try the following with your own application components.
 
