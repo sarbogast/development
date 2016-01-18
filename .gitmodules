@@ -1,0 +1,6 @@
+[submodule "sync-gateway-config"]
+	path = sync-gateway-config
+	url = https://github.com/sarbogast/sync-gateway-config.git
+[submodule "web"]
+	path = web
+	url = https://github.com/sarbogast/web.git
