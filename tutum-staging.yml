@@ -1,5 +1,5 @@
 web:
-  image: kitchensync/web
+  image: sarbogast/web
   ports:
     - '3000:3000'
   links:
@@ -7,7 +7,7 @@ web:
   tags:
     - kitchen-sync-staging
 syncgateway:
-  image: kitchensync/sync-gateway
+  image: sarbogast/sync-gateway-config
   command: /development.json
   ports:
     - '4984:4984'
